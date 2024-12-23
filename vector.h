@@ -7,7 +7,7 @@
 typedef struct vector vector;
 
 // Vector constructor (and wrapper)
-void vector_init(vector* vec, int capacity);
+vector* vector_create(int capacity);
 
 // Vector destructor
 void vector_destroy(vector* vec);
@@ -27,6 +27,12 @@ void vector_sort(vector* vec);
 
 // Vector iterator
 typedef struct vector_it vector_it;
+
+// Interator constructor
+vector_it* vector_it_create(vector* vec);
+
+// Iterator destructor (doesn't destroy internal vec)
+void vector_it_destroy(vector_it* it);
 
 // Iterator is end
 int vector_it_end(vector_it* it);

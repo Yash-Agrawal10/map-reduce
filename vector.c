@@ -11,15 +11,21 @@ typedef struct vector {
     size_t capacity;
 } vector;
 
-// Constructor / Destructor
-void vector_init(vector* vec, int capacity){
+// Vector Constructor / Destructor
+vector* vector_create(int capacity){
+    vector* vec = malloc(sizeof(vector));
+    assert(vec != NULL);
     vec->data = malloc(sizeof(char*) * capacity);
     assert(vec->data != NULL);
     vec->size = 0;
     vec->capacity = capacity;
+    return vec;
 }
 
 void vector_destroy(vector* vec){
+    for (int i = 0; i < vec->size; i++){
+        free(vec->data[i]);
+    }
     free(vec->data);
     free(vec);
 }
@@ -66,11 +72,28 @@ typedef struct vector_it {
 } vector_it;
 
 // Iterator operations
+vector_it* vector_it_create(vector* vec){
+    vector_it* it = malloc(sizeof(vector_it));
+    assert(it != NULL);
+    it->vec = vec;
+    it->curr_index = 0;
+    return it;
+}
+
+void vector_it_destroy(vector_it* it){
+    free(it);
+}
+
 int vector_it_end(vector_it* it){
-    if (it->curr_index < it->vec->size){
+    if (it->vec == NULL){
+        return 1;
+    }
+    else if (it->curr_index < it->vec->size){
         return 0;
     }
-    return 1;
+    else{
+        return 1;
+    }
 }
 
 char* vector_it_next(vector_it* it){
