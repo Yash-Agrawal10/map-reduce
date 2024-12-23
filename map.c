@@ -31,10 +31,13 @@ int get_bucket(const char* str){
 }
 
 // Bucket operations
-void bucket_init(bucket_t* bucket, char* key, vector* values){
-    bucket->key = key;
+bucket_t* bucket_create(char* key, vector* values){
+    bucket_t* bucket = malloc(sizeof(bucket_t));
+    assert(bucket != NULL);
+    bucket->key = strdup(key);
     bucket->values = values;
     bucket->next = NULL;
+    return bucket;
 }
 
 void bucket_destroy(bucket_t* bucket){
@@ -63,9 +66,12 @@ vector* get_values(map_t* map, char* key){
 }
 
 // Map External Functions
-void map_init(map_t* map){
-    vector_init(map->keys, 1);
+map_t* map_create(){
+    map_t* map = malloc(sizeof(map_t));
+    assert(map != NULL);
+    map->keys = vector_create(1);
     memset(map->buckets, 0, sizeof(map->buckets));
+    return map;
 }
 
 void map_destroy(map_t* map){
@@ -81,26 +87,29 @@ void map_insert(map_t* map, char* key, char* value){
         vector_insert(values, value);
     }
     else{
-        bucket_t* new_bucket = malloc(sizeof(bucket_t));
-        assert(new_bucket != NULL);
-        int bucket_num = get_bucket(key);
-        new_bucket->key = key;
-        values = malloc(sizeof(vector));
-        assert(values != NULL);
-        vector_init(values, 1);
+        values = vector_create(1);
         vector_insert(values, value);
-        new_bucket->values = values;
+
+        bucket_t* new_bucket = bucket_create(key, values);
+        int bucket_num = get_bucket(key);
         new_bucket->next = map->buckets[bucket_num];
         map->buckets[bucket_num] = new_bucket;
         vector_insert(map->keys, key);
     }
 }
 
-void map_get(map_t* map, char* key, vector_it* it){
-    vector* values = get_values(map, key);
-    vector_it_init(it, values);
+void map_sort(map_t* map){
+    vector_sort(map->keys);
 }
 
-void map_keys(map_t* map, vector_it* it){
-    vector_it_init(it, map->keys);
+vector_it map_get(map_t* map, char* key){
+    vector* values = get_values(map, key);
+    assert(values != NULL);
+    vector_it it = vector_it_create(values);
+    return it;
+}
+
+vector_it map_keys(map_t* map){
+    vector_it it = vector_it_create(map->keys);
+    return it;
 }

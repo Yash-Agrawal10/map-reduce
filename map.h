@@ -9,7 +9,7 @@
 typedef struct map_t map_t;
 
 // Initialize empty map for use
-void map_init(map_t* map);
+map_t* map_create();
 
 // Destroy map
 void map_destroy(map_t* map);
@@ -17,10 +17,13 @@ void map_destroy(map_t* map);
 // Insert kv pair into map
 void map_insert(map_t* map, char* key, char* value);
 
+// Sort keys in map
+void map_sort(map_t* map);
+
 // Get values corresponding to key from map as iterator
-void map_get(map_t* map, char* key, vector_it* it);
+vector_it map_get(map_t* map, char* key);
 
 // Get keys vec as iterator
-void map_keys(map_t* map, vector_it* it);
+vector_it map_keys(map_t* map);
 
 #endif

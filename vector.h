@@ -16,23 +16,23 @@ void vector_destroy(vector* vec);
 void vector_insert(vector* vec, char* value);
 
 // Get specific index in vector
-void vector_get(vector* vec, int index);
+char* vector_get(vector* vec, size_t index);
 
 // Set value in vector
-void vector_set(vector* vec, size_t index, int value);
+void vector_set(vector* vec, size_t index, char* value);
 
 // Sort values in vector (alphabetically for char*)
 void vector_sort(vector* vec);
 
 
-// Vector iterator
-typedef struct vector_it vector_it;
+// Iterator struct
+typedef struct vector_it {
+    vector* vec;
+    size_t curr_index;
+} vector_it;
 
 // Interator constructor
-vector_it* vector_it_create(vector* vec);
-
-// Iterator destructor (doesn't destroy internal vec)
-void vector_it_destroy(vector_it* it);
+vector_it vector_it_create(vector* vec);
 
 // Iterator is end
 int vector_it_end(vector_it* it);
