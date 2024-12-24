@@ -77,7 +77,7 @@ vector_it vector_it_create(vector* vec){
     return it;
 }
 
-int vector_it_end(const vector_it* it){
+int vector_it_end(vector_it* it){
 if (it->curr_index < it->vec->size){
         return 0;
     }

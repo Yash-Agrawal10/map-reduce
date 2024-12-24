@@ -26,4 +26,9 @@ vector_it map_get(map_t* map, char* key);
 // Get keys vec as iterator
 vector_it map_keys(map_t* map);
 
+// Create new iterator (for map-reduce use)
+void map_init_its(map_t* map);
+
+char* map_get_next(map_t* map, char* key);
+
 #endif
