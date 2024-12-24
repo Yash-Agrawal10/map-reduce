@@ -1,13 +1,14 @@
 #include "map.h"
 #include "vector.h"
 #include <string.h>
+#include <assert.h>
 
 // Structs
 typedef struct bucket_t {
     char* key;
     vector* values;
     vector_it* it;
-    struct node_t* next;
+    struct bucket_t* next;
 } bucket_t;
 
 typedef struct map_t {

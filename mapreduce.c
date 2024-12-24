@@ -3,6 +3,7 @@
 #include "vector.h"
 #include <pthread.h>
 #include <string.h>
+#include <assert.h>
 
 // Global state variable
 typedef struct state_t {
@@ -20,7 +21,7 @@ typedef struct mapper_arg_t {
     int argc;
     char** argv;
     Mapper map_func;
-    pthread_mutex_t lock;
+    pthread_mutex_t* lock;
 } mapper_arg_t;
 
 typedef struct reducer_arg_t {
@@ -35,6 +36,28 @@ char* get_next(char* key, int partition_number){
     return map_get_next(map, key);
 }
 
+void state_g_init(int num_reducers, Partitioner partition){
+    int num_partitions = num_reducers;
+    map_t** partitions = malloc(sizeof(map_t*) * num_partitions);
+    assert(partitions != NULL);
+    pthread_mutex_t** locks = malloc(sizeof(pthread_mutex_t*) * num_partitions);
+    assert(locks != NULL);
+    for (int i = 0; i < num_partitions; i++){
+        partitions[i] = map_create();
+
+        locks[i] = malloc(sizeof(pthread_mutex_t));
+        assert(locks[i] != NULL);
+        int rc = pthread_mutex_init(locks[i], NULL);
+        assert(rc == 0);
+    }
+    state_g = malloc(sizeof(state_t));
+    assert(state_g != NULL);
+    state_g->locks = locks;
+    state_g->num_partitions = num_partitions;
+    state_g->partition_func = partition;
+    state_g->partitions = partitions;
+}
+
 // Thread functions
 void* mapper(void* arg){
     // Parse arguments
@@ -43,19 +66,19 @@ void* mapper(void* arg){
     char** argv = args->argv;
     int argc = args->argc;
     int* index = args->index;
-    pthread_mutex_t lock = args->lock;
+    pthread_mutex_t* lock = args->lock;
 
     // Loop over files, trying to claim them
     while (1){
-        pthread_mutex_lock(&lock);
+        pthread_mutex_lock(lock);
         if (*index >= argc){
-            pthread_mutex_unlock(&lock);
+            pthread_mutex_unlock(lock);
             return NULL;
         }
         else{
             char* filename = argv[*index];
-            *index++;
-            pthread_mutex_unlock(&lock);
+            *index = *index + 1;
+            pthread_mutex_unlock(lock);
             map_func(filename);
         }
     }
@@ -80,28 +103,13 @@ void* reducer(void* arg){
     vector_it keys = map_keys(map);
     while (!vector_it_end(&keys)){
         char* key = vector_it_next(&keys);
-        reducer_func(key, get_next, partition_number);
+        reducer_func(key, get_func, partition_number);
     }
 
     return NULL;
 }
 
 // External Function Implementations
-void state_g_init(int num_reducers, Partitioner partition){
-    int num_partitions = num_reducers;
-    map_t** partitions = malloc(sizeof(map_t*) * num_partitions);
-    assert(partitions != NULL);
-    pthread_mutex_t** locks = malloc(sizeof(pthread_mutex_t*) * num_partitions);
-    assert(locks != NULL);
-    for (int i = 0; i < num_partitions; i++){
-        assert(pthread_mutex_init(locks[i], NULL) == 0);
-    }
-    state_g->locks = locks;
-    state_g->num_partitions = num_partitions;
-    state_g->partition_func = partition;
-    state_g->partitions = partitions;
-}
-
 void MR_Emit(char *key, char *value){
     int partition = state_g->partition_func(key, state_g->num_partitions);
     pthread_mutex_lock(state_g->locks[partition]);
@@ -134,7 +142,7 @@ void MR_Run(int argc, char *argv[],
     for (int i = 0; i < num_mappers; i++){
         mapper_arg_t mapper_arg = {
             &index, argc, 
-            argv, map, lock
+            argv, map, &lock
         };
         mapper_args[i] = mapper_arg;
         pthread_create(&mappers[i], NULL, mapper, &mapper_args[i]);
@@ -156,7 +164,7 @@ void MR_Run(int argc, char *argv[],
         reducer_args[i] = reducer_arg;
         pthread_create(&reducers[i], NULL, reducer, &reducer_args[i]);
     }
-    for (int i = 0; i < num_mappers; i++){
+    for (int i = 0; i < num_reducers; i++){
         pthread_join(reducers[i], NULL);
     }
 

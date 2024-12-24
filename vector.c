@@ -25,7 +25,7 @@ vector* vector_create(int capacity){
 
 void vector_destroy(vector* vec){
     assert(vec != NULL);
-    for (int i = 0; i < vec->size; i++){
+    for (int i = 0; (size_t) i < vec->size; i++){
         free(vec->data[i]);
     }
     free(vec->data);
